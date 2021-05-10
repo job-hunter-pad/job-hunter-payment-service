@@ -1,0 +1,43 @@
+plugins {
+    id 'org.springframework.boot' version '2.4.5'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+    id 'java'
+    id 'application'
+}
+
+group = 'jobhunter.payment.service'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '15'
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation "com.fasterxml.jackson.core:jackson-databind:2.11.4"
+    implementation "org.springframework.kafka:spring-kafka"
+    implementation "org.apache.kafka:kafka_2.13"
+    implementation "org.springframework.boot:spring-boot-starter-data-mongodb"
+    implementation "org.hibernate:hibernate-validator:6.0.13.Final"
+    implementation "org.springframework.boot:spring-boot-starter-web"
+
+    compileOnly 'org.projectlombok:lombok'
+
+    annotationProcessor 'org.projectlombok:lombok'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation "org.springframework.kafka:spring-kafka-test"
+}
+
+test {
+    useJUnitPlatform()
+}
+
+mainClassName = 'jobhunter.payment.service.PaymentServiceApplication'
