@@ -10,4 +10,8 @@ public class PaymentDTO {
     private String employerId;
     private String freelancerId;
     private Float amount;
+
+    public Long convertAmount() {
+        return (long) (amount * 100);
+    }
 }
