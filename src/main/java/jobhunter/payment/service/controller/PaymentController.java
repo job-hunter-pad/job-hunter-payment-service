@@ -3,13 +3,14 @@ package jobhunter.payment.service.controller;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Customer;
 import com.stripe.model.PaymentIntent;
+import com.stripe.model.checkout.Session;
 import com.stripe.param.CustomerCreateParams;
 import com.stripe.param.CustomerUpdateParams;
-import com.stripe.param.PaymentIntentConfirmParams;
-import com.stripe.param.PaymentIntentCreateParams;
+import com.stripe.param.checkout.SessionCreateParams;
 import jobhunter.payment.service.controller.dto.CreateCustomerDTO;
 import jobhunter.payment.service.controller.dto.PaymentDTO;
 import jobhunter.payment.service.controller.dto.UpdateCustomerDTO;
+import jobhunter.payment.service.models.CheckoutSession;
 import jobhunter.payment.service.models.JobHunterCustomer;
 import jobhunter.payment.service.models.JobOfferPayment;
 import jobhunter.payment.service.models.JobOfferPaymentStatus;
@@ -31,8 +32,8 @@ public class PaymentController {
         this.jobHunterCustomerService = jobHunterCustomerService;
     }
 
-    @PostMapping("/pay")
-    public JobOfferPayment makePayment(@RequestBody PaymentDTO paymentDTO) {
+    @PostMapping("/checkout")
+    public CheckoutSession paymentWithCheckoutPage(@RequestBody PaymentDTO paymentDTO) {
 
         Optional<JobHunterCustomer> customerOptional = jobHunterCustomerService.getCustomer(paymentDTO.getEmployerId());
         if (customerOptional.isEmpty()) {
@@ -41,64 +42,44 @@ public class PaymentController {
         }
         JobHunterCustomer jobHunterCustomer = customerOptional.get();
 
-        Map<String, String> metaData = new HashMap<>();
-        metaData.put("jobId", paymentDTO.getJobId());
-        metaData.put("employerId", paymentDTO.getEmployerId());
-        metaData.put("freelancerId", paymentDTO.getFreelancerId());
+        Map<String, String> paymentMetaData = new HashMap<>();
+        paymentMetaData.put("jobId", paymentDTO.getJobId());
+        paymentMetaData.put("jobName", paymentDTO.getJobName());
+        paymentMetaData.put("employerId", paymentDTO.getEmployerId());
+        paymentMetaData.put("freelancerId", paymentDTO.getFreelancerId());
 
-        PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
-                .setAmount(paymentDTO.convertAmount())
-                .setCurrency("USD")
+        Map<String, Object> paymentIntentData = new HashMap<>();
+        paymentIntentData.put("metadata", paymentMetaData);
+
+        SessionCreateParams.LineItem lineItem = SessionCreateParams.LineItem.builder()
+                .setQuantity(1L)
+                .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
+                        .setCurrency("usd")
+                        .setUnitAmount(paymentDTO.convertAmount())
+                        .setProductData(SessionCreateParams.LineItem.PriceData.ProductData
+                                .builder()
+                                .setName(paymentDTO.getJobName())
+                                .build())
+                        .build())
+                .build();
+
+        SessionCreateParams params = SessionCreateParams.builder()
+                .addPaymentMethodType(SessionCreateParams.PaymentMethodType.CARD)
+                .setMode(SessionCreateParams.Mode.PAYMENT)
                 .setCustomer(jobHunterCustomer.getStripeId())
-                .putAllMetadata(metaData)
+                .setSuccessUrl(paymentDTO.getSuccessUrl())
+                .setCancelUrl(paymentDTO.getCancelUrl())
+                .putExtraParam("payment_intent_data", paymentIntentData)
+                .addLineItem(lineItem)
                 .build();
 
         try {
-            PaymentIntent paymentIntent = PaymentIntent.create(params);
-
-            return jobHunterCustomerService.addPayment(jobHunterCustomer, paymentDTO, paymentIntent.getId());
-
-
+            Session session = Session.create(params);
+            return new CheckoutSession(session.getId());
         } catch (StripeException e) {
+            System.out.println("Session could not be created!");
             e.printStackTrace();
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @PostMapping("/confirmPayment/{paymentId}")
-    public JobOfferPayment confirmPayment(@PathVariable String paymentId) {
-        try {
-            PaymentIntent paymentIntent = PaymentIntent.retrieve(paymentId);
-
-            PaymentIntentConfirmParams paymentIntentConfirmParams = PaymentIntentConfirmParams.builder()
-                    .setPaymentMethod("pm_card_visa")
-                    .build();
-
-            PaymentIntent confirmedPaymentIntent = paymentIntent.confirm(paymentIntentConfirmParams);
-
-            Map<String, String> metadata = confirmedPaymentIntent.getMetadata();
-            if (!metadata.containsKey("employerId")) {
-                System.out.println("No employerId found in Metadata");
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-            }
-
-            String employerId = metadata.get("employerId");
-
-            Optional<JobHunterCustomer> optional = jobHunterCustomerService.getCustomer(employerId);
-            if (optional.isEmpty()) {
-                System.out.println("Employer not found");
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-            }
-
-            return jobHunterCustomerService.updatePaymentStatus(optional.get(), confirmedPaymentIntent.getId(), JobOfferPaymentStatus.SUCCEEDED)
-                    .orElseThrow(() -> {
-                        System.out.println("Payment not found in Customer Payments");
-                        throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-                    });
-
-        } catch (StripeException e) {
-            e.printStackTrace();
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
     }
 
