@@ -1,7 +1,6 @@
 package jobhunter.payment.service;
 
 import com.stripe.Stripe;
-import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -9,8 +8,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class PaymentServiceApplication {
 
     public static void main(String[] args) {
-        Dotenv dotenv = Dotenv.load();
-        Stripe.apiKey = dotenv.get("STRIPE_SECRET");
+
+        Stripe.apiKey = args[0];
 
         SpringApplication.run(PaymentServiceApplication.class, args);
     }
