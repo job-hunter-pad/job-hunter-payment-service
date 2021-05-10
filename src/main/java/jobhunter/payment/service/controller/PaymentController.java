@@ -1,17 +1,22 @@
 package jobhunter.payment.service.controller;
 
-import org.springframework.web.bind.annotation.GetMapping;
+import jobhunter.payment.service.controller.dto.PaymentDTO;
+import jobhunter.payment.service.models.Payment;
+import jobhunter.payment.service.service.PaymentService;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class PaymentController {
-    @GetMapping("/")
-    public String root() {
-        return "It Works!";
+    private final PaymentService paymentService;
+
+    public PaymentController(PaymentService paymentService) {
+        this.paymentService = paymentService;
     }
 
-    @GetMapping("/test")
-    public String test() {
-        return "Test Works!";
+    @PostMapping("/pay")
+    public Payment makePayment(@RequestBody PaymentDTO paymentDTO) {
+        return paymentService.makePayment(paymentDTO);
     }
 }
