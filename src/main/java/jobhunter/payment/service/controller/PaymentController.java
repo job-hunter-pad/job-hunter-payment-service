@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -101,6 +102,20 @@ public class PaymentController {
         }
     }
 
+    @GetMapping("/getNotConfirmedPayments/{employerId}")
+    public List<JobOfferPayment> getNotConfirmedPayments(@PathVariable String employerId) {
+        return jobHunterCustomerService.getPayments(employerId, JobOfferPaymentStatus.REQUIRES_PAYMENT_METHOD).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND)
+        );
+    }
+
+    @GetMapping("/getSucceededPayments/{employerId}")
+    public List<JobOfferPayment> getSucceededPayments(@PathVariable String employerId) {
+        return jobHunterCustomerService.getPayments(employerId, JobOfferPaymentStatus.SUCCEEDED).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND)
+        );
+    }
+
     @PostMapping("/cancelPayment/{paymentId}")
     public String cancelPayment(@PathVariable String paymentId) {
 
@@ -161,7 +176,6 @@ public class PaymentController {
         }
 
         JobHunterCustomer updatedJobHunterCustomer = optional.get();
-
 
         CustomerUpdateParams customerUpdateParams = CustomerUpdateParams.builder()
                 .setName(updatedJobHunterCustomer.getName())

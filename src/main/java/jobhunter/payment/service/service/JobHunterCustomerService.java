@@ -7,6 +7,7 @@ import jobhunter.payment.service.models.JobHunterCustomer;
 import jobhunter.payment.service.models.JobOfferPayment;
 import jobhunter.payment.service.models.JobOfferPaymentStatus;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface JobHunterCustomerService {
@@ -21,4 +22,6 @@ public interface JobHunterCustomerService {
     JobOfferPayment addPayment(JobHunterCustomer jobHunterCustomer, PaymentDTO paymentDTO, String stripeId);
 
     Optional<JobOfferPayment> updatePaymentStatus(JobHunterCustomer jobHunterCustomer, String paymentStripeId, JobOfferPaymentStatus status);
+
+    Optional<List<JobOfferPayment>> getPayments(String employerId, JobOfferPaymentStatus paymentStatus);
 }

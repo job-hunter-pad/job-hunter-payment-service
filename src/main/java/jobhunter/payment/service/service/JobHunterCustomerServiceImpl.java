@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class JobHunterCustomerServiceImpl implements JobHunterCustomerService {
@@ -78,15 +79,30 @@ public class JobHunterCustomerServiceImpl implements JobHunterCustomerService {
     @Override
     public Optional<JobOfferPayment> updatePaymentStatus(JobHunterCustomer jobHunterCustomer, String paymentStripeId, JobOfferPaymentStatus status) {
         List<JobOfferPayment> payments = jobHunterCustomer.getPayments();
-        for (int i = 0; i < payments.size(); i++) {
-            if (payments.get(i).getStripeId().equals(paymentStripeId)) {
-                payments.get(i).setStatus(status);
+        for (JobOfferPayment payment : payments) {
+            if (payment.getStripeId().equals(paymentStripeId)) {
+                payment.setStatus(status);
 
                 jobHunterCustomerRepository.save(jobHunterCustomer);
 
-                return Optional.of(payments.get(i));
+                return Optional.of(payment);
             }
         }
         return Optional.empty();
+    }
+
+    @Override
+    public Optional<List<JobOfferPayment>> getPayments(String employerId, JobOfferPaymentStatus paymentStatus) {
+
+        Optional<JobHunterCustomer> optional = jobHunterCustomerRepository.findById(employerId);
+        if (optional.isEmpty()) {
+            return Optional.empty();
+        }
+
+        List<JobOfferPayment> payments = optional.get().getPayments().stream()
+                .filter(jobOfferPayment -> jobOfferPayment.getStatus().equals(paymentStatus))
+                .collect(Collectors.toList());
+
+        return Optional.of(payments);
     }
 }
