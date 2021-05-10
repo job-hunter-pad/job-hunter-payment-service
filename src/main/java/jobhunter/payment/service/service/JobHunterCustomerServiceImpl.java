@@ -67,13 +67,16 @@ public class JobHunterCustomerServiceImpl implements JobHunterCustomerService {
     }
 
     @Override
-    public JobOfferPayment addPayment(JobHunterCustomer jobHunterCustomer, PaymentDTO paymentDTO, String stripeId) {
+    public Optional<JobOfferPayment> addPayment(JobHunterCustomer jobHunterCustomer, PaymentDTO paymentDTO, String stripeId) {
+        if (stripeId == null) {
+            return Optional.empty();
+        }
         JobOfferPayment jobOfferPayment = new JobOfferPayment(stripeId, JobOfferPaymentStatus.REQUIRES_PAYMENT_METHOD,
                 paymentDTO.getAmount(), paymentDTO.getJobId(), paymentDTO.getEmployerId(), paymentDTO.getFreelancerId());
         jobHunterCustomer.getPayments().add(jobOfferPayment);
 
         jobHunterCustomerRepository.save(jobHunterCustomer);
-        return jobOfferPayment;
+        return Optional.of(jobOfferPayment);
     }
 
     @Override

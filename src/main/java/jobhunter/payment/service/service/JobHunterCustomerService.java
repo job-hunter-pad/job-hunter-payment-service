@@ -19,7 +19,7 @@ public interface JobHunterCustomerService {
 
     Optional<JobHunterCustomer> getCustomerByStripeId(String stripeId);
 
-    JobOfferPayment addPayment(JobHunterCustomer jobHunterCustomer, PaymentDTO paymentDTO, String stripeId);
+    Optional<JobOfferPayment> addPayment(JobHunterCustomer jobHunterCustomer, PaymentDTO paymentDTO, String stripeId);
 
     Optional<JobOfferPayment> updatePaymentStatus(JobHunterCustomer jobHunterCustomer, String paymentStripeId, JobOfferPaymentStatus status);
 
