@@ -32,7 +32,6 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
 
     compile "com.stripe:stripe-java:20.50.0"
-    compile 'io.github.cdimascio:java-dotenv:5.2.2'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation "org.springframework.kafka:spring-kafka-test"
