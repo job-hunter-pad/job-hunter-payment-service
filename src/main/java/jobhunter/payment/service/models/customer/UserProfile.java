@@ -13,6 +13,5 @@ public class UserProfile {
     private String email;
     private String userType;
     private String location;
-    private String description;
     private String phoneNumber;
 }

@@ -22,10 +22,13 @@ import java.util.Map;
 public class StripeWebhookController {
     private final JobHunterPaymentService jobHunterPaymentService;
     private final JobOfferPaymentProducer jobOfferPaymentProducer;
+    private final String webhookSecret;
 
     public StripeWebhookController(JobHunterPaymentService jobHunterPaymentService, JobOfferPaymentProducer jobOfferPaymentProducer) {
         this.jobHunterPaymentService = jobHunterPaymentService;
         this.jobOfferPaymentProducer = jobOfferPaymentProducer;
+
+        webhookSecret = System.getenv("WEB_HOOK_KEY");
     }
 
     @PostMapping("/webhook")
@@ -34,16 +37,15 @@ public class StripeWebhookController {
             return "";
         }
 
-
-        // If you are testing your webhook locally with the Stripe CLI you
-        // can find the endpoint's secret by running `stripe listen`
-        // Otherwise, find your endpoint's secret in your webhook settings in the Developer Dashboard
-        String endpointSecret = "whsec_pJSLAljBoNu2Ewd5FB5g8z7lhFek1HV7";
+        if (webhookSecret == null || webhookSecret.isEmpty()) {
+            System.err.println("No WEB HOOK SECRET");
+            return "";
+        }
 
         Event event;
 
         try {
-            event = Webhook.constructEvent(payload, sigHeader, endpointSecret);
+            event = Webhook.constructEvent(payload, sigHeader, webhookSecret);
 
         } catch (SignatureVerificationException e) {
             System.out.println("Invalid Signature");
