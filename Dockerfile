@@ -17,6 +17,8 @@ COPY ${JAR_FILE} paymentservice.jar
 
 COPY scripts/run.sh run.sh
 
+RUN ["chmod", "+x", "./run.sh"]
+
 EXPOSE 8080
 
 CMD ./run.sh
