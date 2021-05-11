@@ -1,6 +1,6 @@
 package jobhunter.payment.service.controller.dto;
 
-import jobhunter.payment.service.models.CustomerType;
+import jobhunter.payment.service.models.customer.CustomerType;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

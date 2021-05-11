@@ -6,7 +6,8 @@ import com.stripe.model.EventDataObjectDeserializer;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.StripeObject;
 import com.stripe.net.Webhook;
-import jobhunter.payment.service.models.JobOfferPayment;
+import jobhunter.payment.service.kafka.producer.JobOfferPaymentProducer;
+import jobhunter.payment.service.models.payment.JobOfferPayment;
 import jobhunter.payment.service.service.JobHunterPaymentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,11 +21,12 @@ import java.util.Map;
 @RestController
 public class StripeWebhookController {
     private final JobHunterPaymentService jobHunterPaymentService;
+    private final JobOfferPaymentProducer jobOfferPaymentProducer;
 
-    public StripeWebhookController(JobHunterPaymentService jobHunterPaymentService) {
+    public StripeWebhookController(JobHunterPaymentService jobHunterPaymentService, JobOfferPaymentProducer jobOfferPaymentProducer) {
         this.jobHunterPaymentService = jobHunterPaymentService;
+        this.jobOfferPaymentProducer = jobOfferPaymentProducer;
     }
-
 
     @PostMapping("/webhook")
     public String handleStripeEvents(@RequestBody String payload, @RequestHeader("Stripe-Signature") String sigHeader) {
@@ -73,8 +75,8 @@ public class StripeWebhookController {
                     amount / 100.0f, jobId, jobName, employerId, freelancerId);
 
             jobHunterPaymentService.addPayment(employerId, jobOfferPayment);
-            // todo write to kafka
 
+            jobOfferPaymentProducer.postJobOfferPayment(jobOfferPayment);
 
             System.out.println("Payment succeeded for " + amount);
         } else {
