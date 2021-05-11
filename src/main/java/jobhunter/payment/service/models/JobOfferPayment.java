@@ -7,9 +7,10 @@ import lombok.Data;
 @AllArgsConstructor
 public class JobOfferPayment {
     private String stripeId;
-    private JobOfferPaymentStatus status;
+    private String status;
     private float amount;
     private String jobId;
+    private String jobName;
     private String employerId;
     private String freelancerId;
 }
