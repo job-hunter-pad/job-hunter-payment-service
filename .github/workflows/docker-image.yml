@@ -26,5 +26,5 @@ jobs:
     - name: Build And Publish Docker Image
       run: |
         docker login -u ${{ secrets.DOCKER_USERNAME }} -p "${{ secrets.DOCKER_PASSWORD }}"
-        docker build -t jobhunterpad/job-hunter-payment-service .
+        docker build --build-arg STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }} --build-arg WEB_HOOK=${{ secrets.WEB_HOOK }} -t jobhunterpad/job-hunter-payment-service .
         docker push jobhunterpad/job-hunter-payment-service
