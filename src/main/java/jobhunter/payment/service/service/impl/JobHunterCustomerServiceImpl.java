@@ -6,7 +6,7 @@ import com.stripe.param.CustomerCreateParams;
 import com.stripe.param.CustomerUpdateParams;
 import jobhunter.payment.service.controller.dto.CreateCustomerDTO;
 import jobhunter.payment.service.controller.dto.UpdateCustomerDTO;
-import jobhunter.payment.service.models.JobHunterCustomer;
+import jobhunter.payment.service.models.customer.JobHunterCustomer;
 import jobhunter.payment.service.repository.JobHunterCustomerRepository;
 import jobhunter.payment.service.service.JobHunterCustomerService;
 import org.springframework.stereotype.Service;

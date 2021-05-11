@@ -1,6 +1,6 @@
 package jobhunter.payment.service.repository;
 
-import jobhunter.payment.service.models.JobHunterCustomer;
+import jobhunter.payment.service.models.customer.JobHunterCustomer;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.Optional;

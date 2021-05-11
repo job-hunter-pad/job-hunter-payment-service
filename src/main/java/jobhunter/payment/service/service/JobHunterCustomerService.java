@@ -3,7 +3,7 @@ package jobhunter.payment.service.service;
 import com.stripe.exception.StripeException;
 import jobhunter.payment.service.controller.dto.CreateCustomerDTO;
 import jobhunter.payment.service.controller.dto.UpdateCustomerDTO;
-import jobhunter.payment.service.models.JobHunterCustomer;
+import jobhunter.payment.service.models.customer.JobHunterCustomer;
 
 import java.util.Optional;
 

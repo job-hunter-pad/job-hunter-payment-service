@@ -1,5 +1,6 @@
-package jobhunter.payment.service.models;
+package jobhunter.payment.service.models.customer;
 
+import jobhunter.payment.service.models.payment.JobOfferPayment;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

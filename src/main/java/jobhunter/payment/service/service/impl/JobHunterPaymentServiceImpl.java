@@ -1,7 +1,7 @@
 package jobhunter.payment.service.service.impl;
 
-import jobhunter.payment.service.models.JobHunterCustomer;
-import jobhunter.payment.service.models.JobOfferPayment;
+import jobhunter.payment.service.models.customer.JobHunterCustomer;
+import jobhunter.payment.service.models.payment.JobOfferPayment;
 import jobhunter.payment.service.repository.JobHunterCustomerRepository;
 import jobhunter.payment.service.service.JobHunterPaymentService;
 import org.springframework.stereotype.Service;

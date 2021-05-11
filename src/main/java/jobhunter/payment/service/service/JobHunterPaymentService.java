@@ -1,6 +1,6 @@
 package jobhunter.payment.service.service;
 
-import jobhunter.payment.service.models.JobOfferPayment;
+import jobhunter.payment.service.models.payment.JobOfferPayment;
 
 import java.util.List;
 import java.util.Optional;
