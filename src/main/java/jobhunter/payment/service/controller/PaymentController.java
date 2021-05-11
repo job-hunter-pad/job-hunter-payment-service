@@ -1,20 +1,17 @@
 package jobhunter.payment.service.controller;
 
 import com.stripe.exception.StripeException;
-import com.stripe.model.Customer;
-import com.stripe.model.PaymentIntent;
 import com.stripe.model.checkout.Session;
-import com.stripe.param.CustomerCreateParams;
-import com.stripe.param.CustomerUpdateParams;
 import com.stripe.param.checkout.SessionCreateParams;
 import jobhunter.payment.service.controller.dto.CreateCustomerDTO;
 import jobhunter.payment.service.controller.dto.PaymentDTO;
 import jobhunter.payment.service.controller.dto.UpdateCustomerDTO;
 import jobhunter.payment.service.models.CheckoutSession;
+import jobhunter.payment.service.models.CustomerType;
 import jobhunter.payment.service.models.JobHunterCustomer;
 import jobhunter.payment.service.models.JobOfferPayment;
-import jobhunter.payment.service.models.JobOfferPaymentStatus;
 import jobhunter.payment.service.service.JobHunterCustomerService;
+import jobhunter.payment.service.service.JobHunterPaymentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -27,20 +24,34 @@ import java.util.Optional;
 @RestController
 public class PaymentController {
     private final JobHunterCustomerService jobHunterCustomerService;
+    private final JobHunterPaymentService jobHunterPaymentService;
 
-    public PaymentController(JobHunterCustomerService jobHunterCustomerService) {
+    public PaymentController(JobHunterCustomerService jobHunterCustomerService, JobHunterPaymentService jobHunterPaymentService) {
         this.jobHunterCustomerService = jobHunterCustomerService;
+        this.jobHunterPaymentService = jobHunterPaymentService;
     }
 
     @PostMapping("/checkout")
     public CheckoutSession paymentWithCheckoutPage(@RequestBody PaymentDTO paymentDTO) {
 
         Optional<JobHunterCustomer> customerOptional = jobHunterCustomerService.getCustomer(paymentDTO.getEmployerId());
+        JobHunterCustomer jobHunterCustomer;
+
         if (customerOptional.isEmpty()) {
-            System.out.println("Employer not found");
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE);
+            try {
+
+                CreateCustomerDTO createCustomerDTO = new CreateCustomerDTO();
+                createCustomerDTO.setUserId(paymentDTO.getEmployerId());
+                createCustomerDTO.setCustomerType(CustomerType.EMPLOYER);
+
+                jobHunterCustomer = jobHunterCustomerService.createCustomer(createCustomerDTO);
+            } catch (StripeException e) {
+                e.printStackTrace();
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        } else {
+            jobHunterCustomer = customerOptional.get();
         }
-        JobHunterCustomer jobHunterCustomer = customerOptional.get();
 
         Map<String, String> paymentMetaData = new HashMap<>();
         paymentMetaData.put("jobId", paymentDTO.getJobId());
@@ -83,30 +94,11 @@ public class PaymentController {
         }
     }
 
-    @GetMapping("/getNotConfirmedPayments/{employerId}")
+    @GetMapping("/getPayments/{employerId}")
     public List<JobOfferPayment> getNotConfirmedPayments(@PathVariable String employerId) {
-        return jobHunterCustomerService.getPayments(employerId, JobOfferPaymentStatus.REQUIRES_PAYMENT_METHOD).orElseThrow(() ->
+        return jobHunterPaymentService.getPayments(employerId).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND)
         );
-    }
-
-    @GetMapping("/getSucceededPayments/{employerId}")
-    public List<JobOfferPayment> getSucceededPayments(@PathVariable String employerId) {
-        return jobHunterCustomerService.getPayments(employerId, JobOfferPaymentStatus.SUCCEEDED).orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.NOT_FOUND)
-        );
-    }
-
-    @PostMapping("/cancelPayment/{paymentId}")
-    public String cancelPayment(@PathVariable String paymentId) {
-
-        try {
-            PaymentIntent paymentIntent = PaymentIntent.retrieve(paymentId);
-            return paymentIntent.cancel().toJson();
-        } catch (StripeException e) {
-            e.printStackTrace();
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
     }
 
     @GetMapping("/getCustomer/{userId}")
@@ -114,7 +106,6 @@ public class PaymentController {
         return jobHunterCustomerService.getCustomer(userId).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
-
 
     @GetMapping("/getCustomerByStripeId/{stripeId}")
     public JobHunterCustomer getCustomerByStripeId(@PathVariable String stripeId) {
@@ -124,58 +115,22 @@ public class PaymentController {
 
     @PostMapping("/createCustomer")
     public JobHunterCustomer createCustomer(@RequestBody CreateCustomerDTO createCustomerDTO) {
-
-        CustomerCreateParams customerCreateParams = CustomerCreateParams.builder()
-                .setName(createCustomerDTO.getName())
-                .setEmail(createCustomerDTO.getEmail())
-                .setPhone(createCustomerDTO.getPhoneNumber())
-                .setAddress(
-                        CustomerCreateParams.Address.builder()
-                                .setLine1(createCustomerDTO.getLocation())
-                                .build()
-                )
-                .build();
-
-        JobHunterCustomer jobHunterCustomer;
         try {
-            Customer customer = Customer.create(customerCreateParams);
-            jobHunterCustomer = jobHunterCustomerService.createCustomer(createCustomerDTO, customer.getId());
-
+            return jobHunterCustomerService.createCustomer(createCustomerDTO);
         } catch (StripeException e) {
             e.printStackTrace();
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
-        return jobHunterCustomer;
     }
 
     @PostMapping("/updateCustomer")
     public JobHunterCustomer updateCustomer(@RequestBody UpdateCustomerDTO updateCustomerDTO) {
-        Optional<JobHunterCustomer> optional = jobHunterCustomerService.updateCustomer(updateCustomerDTO);
-        if (optional.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
-
-        JobHunterCustomer updatedJobHunterCustomer = optional.get();
-
-        CustomerUpdateParams customerUpdateParams = CustomerUpdateParams.builder()
-                .setName(updatedJobHunterCustomer.getName())
-                .setPhone(updatedJobHunterCustomer.getPhoneNumber())
-                .setAddress(
-                        CustomerUpdateParams.Address.builder()
-                                .setLine1(updatedJobHunterCustomer.getLocation())
-                                .build()
-                )
-                .build();
-
         try {
-            Customer customer = Customer.retrieve(updatedJobHunterCustomer.getStripeId());
-            customer.update(customerUpdateParams);
+            return jobHunterCustomerService.updateCustomer(updateCustomerDTO).orElseThrow(() ->
+                    new ResponseStatusException(HttpStatus.NOT_FOUND));
         } catch (StripeException e) {
             e.printStackTrace();
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
-        return updatedJobHunterCustomer;
     }
 }

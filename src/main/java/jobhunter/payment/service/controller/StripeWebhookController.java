@@ -6,6 +6,8 @@ import com.stripe.model.EventDataObjectDeserializer;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.StripeObject;
 import com.stripe.net.Webhook;
+import jobhunter.payment.service.models.JobOfferPayment;
+import jobhunter.payment.service.service.JobHunterPaymentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -13,8 +15,17 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Map;
+
 @RestController
 public class StripeWebhookController {
+    private final JobHunterPaymentService jobHunterPaymentService;
+
+    public StripeWebhookController(JobHunterPaymentService jobHunterPaymentService) {
+        this.jobHunterPaymentService = jobHunterPaymentService;
+    }
+
+
     @PostMapping("/webhook")
     public String handleStripeEvents(@RequestBody String payload, @RequestHeader("Stripe-Signature") String sigHeader) {
         if (sigHeader == null) {
@@ -43,20 +54,32 @@ public class StripeWebhookController {
         if (dataObjectDeserializer.getObject().isPresent()) {
             stripeObject = dataObjectDeserializer.getObject().get();
 
-        } else {
-            // Deserialization failed, probably due to an API version mismatch.
-            // Refer to the Javadoc documentation on `EventDataObjectDeserializer` for
-            // instructions on how to handle this case, or return an error here.
         }
 
         System.out.println(event.getType());
         if ("payment_intent.succeeded".equals(event.getType())) {
             PaymentIntent paymentIntent = (PaymentIntent) stripeObject;
-            System.out.println("Payment succeeded for " + paymentIntent.getAmount());
+
+            Map<String, String> metadata = paymentIntent.getMetadata();
+
+            String jobId = metadata.get("jobId");
+            String jobName = metadata.get("jobName");
+            String employerId = metadata.get("employerId");
+            String freelancerId = metadata.get("freelancerId");
+
+            Long amount = paymentIntent.getAmount();
+
+            JobOfferPayment jobOfferPayment = new JobOfferPayment(paymentIntent.getId(), paymentIntent.getStatus(),
+                    amount / 100.0f, jobId, jobName, employerId, freelancerId);
+
+            jobHunterPaymentService.addPayment(employerId, jobOfferPayment);
+            // todo write to kafka
+
+
+            System.out.println("Payment succeeded for " + amount);
         } else {
             System.out.println("Unhandled event type: " + event.getType());
         }
-
 
         return "";
     }
