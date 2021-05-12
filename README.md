@@ -1,5 +1,20 @@
 # Job Hunter Payment Service
 
+## Environment Variables
+
+- AUTH_VERIFICATION_URL
+- WEB_HOOK_KEY
+- STRIPE_API_KEY
+
+#### AUTH_VERIFICATION_URL
+
+`AUTH_VERIFICATION_URL` indicates the url to the Authentication Service
+
+This Environment Variable is used to access the Authentication Service in order authorize certain requests
+
+Example:
+> AUTH_VERIFICATION_URL=http://localhost:8090/api/auth/validateId
+
 ## Endpoints
 
 ### Checkout
@@ -7,6 +22,10 @@
 | URL | API Gateway URL | Method |
 | ------ | ------ | ------ |
 | /checkout | /api/payment/activeJobs | POST |
+
+#### Notes
+
+> Requires Authorization Header with JWT
 
 #### Description
 
@@ -40,6 +59,10 @@ The Response consists of a Checkout Session ID
 | ------ | ------ | ------ |
 | /getPayments/{employerId} | /api/payment/getPayments/{employerId} | GET |
 
+#### Notes
+
+> Requires Authorization Header with JWT
+
 #### Description
 
 Get All the Payments of an Employer using the `employerId`
@@ -71,6 +94,10 @@ JobOfferPayment
 | URL | API Gateway URL | Method |
 | ------ | ------ | ------ |
 | /getCustomer/{userId} | /api/payment/getCustomer/{userId} | GET |
+
+#### Notes
+
+> Requires Authorization Header with JWT
 
 #### Description
 
@@ -110,6 +137,10 @@ public enum CustomerType {
 | ------ | ------ | ------ |
 | /getCustomerByStripeId/{stripeId} | /api/payment/getCustomerByStripeId/{stripeId} | GET |
 
+#### Notes
+
+> Requires Authorization Header with JWT
+
 #### Description
 
 Get info of a Customer using its `stripeId`
@@ -147,6 +178,10 @@ public enum CustomerType {
 | URL | API Gateway URL | Method |
 | ------ | ------ | ------ |
 | /createCustomer | /api/payment/createCustomer | POST |
+
+#### Notes
+
+> Requires Authorization Header with JWT
 
 #### Description
 
@@ -204,6 +239,10 @@ public enum CustomerType {
 | URL | API Gateway URL | Method |
 | ------ | ------ | ------ |
 | /updateCustomer | /api/payment/updateCustomer | POST |
+
+#### Notes
+
+> Requires Authorization Header with JWT
 
 #### Description
 
