@@ -6,8 +6,9 @@ RUN wget -qO- "https://github.com/stripe/stripe-cli/releases/download/v1.5.14/st
 
 ARG STRIPE_SECRET_KEY
 ARG WEB_HOOK
+ARG VERIF_URL=http://apigateway/api/auth/validateId
 
-ENV STRIPE_KEY=$STRIPE_SECRET_KEY
+ENV AUTH_VERIFICATION_URL=$VERIF_URL
 ENV WEB_HOOK_KEY=$WEB_HOOK
 ENV STRIPE_API_KEY=$STRIPE_SECRET_KEY
 

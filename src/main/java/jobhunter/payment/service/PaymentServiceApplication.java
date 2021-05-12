@@ -9,9 +9,9 @@ public class PaymentServiceApplication {
 
     public static void main(String[] args) {
 
-        String stripe_key = System.getenv("STRIPE_KEY");
-        if (stripe_key != null && !stripe_key.isEmpty()) {
-            Stripe.apiKey = stripe_key;
+        String stripeApiKey = System.getenv("STRIPE_API_KEY");
+        if (stripeApiKey != null && !stripeApiKey.isEmpty()) {
+            Stripe.apiKey = stripeApiKey;
         }
 
         SpringApplication.run(PaymentServiceApplication.class, args);
