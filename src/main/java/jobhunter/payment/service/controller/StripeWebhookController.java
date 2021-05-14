@@ -61,7 +61,7 @@ public class StripeWebhookController {
         }
 
         System.out.println(event.getType());
-        if ("payment_intent.succeeded".equals(event.getType())) {
+        if ("payment_intent.succeeded".equals(event.getType()) || "charge.succeeded".equals(event.getType())) {
             PaymentIntent paymentIntent = (PaymentIntent) stripeObject;
 
             Map<String, String> metadata = paymentIntent.getMetadata();
