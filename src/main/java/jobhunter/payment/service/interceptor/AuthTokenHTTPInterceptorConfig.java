@@ -15,6 +15,7 @@ public class AuthTokenHTTPInterceptorConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         WebMvcConfigurer.super.addInterceptors(registry);
-        registry.addInterceptor(new AuthTokenHTTPInterceptor(bearerExtractor));
+        registry.addInterceptor(new AuthTokenHTTPInterceptor(bearerExtractor))
+                .excludePathPatterns("/webhook");
     }
 }
