@@ -1,10 +1,7 @@
 package jobhunter.payment.service.controller;
 
 import com.stripe.exception.SignatureVerificationException;
-import com.stripe.model.Event;
-import com.stripe.model.EventDataObjectDeserializer;
-import com.stripe.model.PaymentIntent;
-import com.stripe.model.StripeObject;
+import com.stripe.model.*;
 import com.stripe.net.Webhook;
 import jobhunter.payment.service.kafka.producer.JobOfferPaymentProducer;
 import jobhunter.payment.service.models.payment.JobOfferPayment;
@@ -61,30 +58,35 @@ public class StripeWebhookController {
         }
 
         System.out.println(event.getType());
-        if ("payment_intent.succeeded".equals(event.getType()) || "charge.succeeded".equals(event.getType())) {
+        if ("payment_intent.succeeded".equals(event.getType())) {
             PaymentIntent paymentIntent = (PaymentIntent) stripeObject;
 
-            Map<String, String> metadata = paymentIntent.getMetadata();
+            updateDBAndKafka(paymentIntent.getMetadata(), paymentIntent.getId(), paymentIntent.getStatus(), paymentIntent.getAmount());
+        } else if ("charge.succeeded".equals(event.getType())) {
+            Charge charge = (Charge) stripeObject;
 
-            String jobId = metadata.get("jobId");
-            String jobName = metadata.get("jobName");
-            String employerId = metadata.get("employerId");
-            String freelancerId = metadata.get("freelancerId");
-
-            Long amount = paymentIntent.getAmount();
-
-            JobOfferPayment jobOfferPayment = new JobOfferPayment(paymentIntent.getId(), paymentIntent.getStatus(),
-                    amount / 100.0f, jobId, jobName, employerId, freelancerId);
-
-            jobHunterPaymentService.addPayment(employerId, jobOfferPayment);
-
-            jobOfferPaymentProducer.postJobOfferPayment(jobOfferPayment);
-
-            System.out.println("Payment succeeded for " + amount);
+            updateDBAndKafka(charge.getMetadata(), charge.getId(), charge.getStatus(), charge.getAmount());
         } else {
             System.out.println("Unhandled event type: " + event.getType());
         }
 
         return "";
+    }
+
+    private void updateDBAndKafka(Map<String, String> metadata, String id, String status, long amount) {
+
+        String jobId = metadata.get("jobId");
+        String jobName = metadata.get("jobName");
+        String employerId = metadata.get("employerId");
+        String freelancerId = metadata.get("freelancerId");
+
+        JobOfferPayment jobOfferPayment = new JobOfferPayment(id, status,
+                amount / 100.0f, jobId, jobName, employerId, freelancerId);
+
+        jobHunterPaymentService.addPayment(employerId, jobOfferPayment);
+
+        jobOfferPaymentProducer.postJobOfferPayment(jobOfferPayment);
+
+        System.out.println("Payment succeeded for " + amount);
     }
 }
